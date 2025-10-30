@@ -1,9 +1,6 @@
-// EmailJS Configuration
-const EMAILJS_CONFIG = {
-    serviceId: 'service_36l7g78',
-    templateId: 'template_zakxxsw',
-    publicKey: 'k1PYqQSpq4l5IcnxT'
-};
+// Google Apps Script Web App URL
+// IMPORTANT: Replace with your actual Google Apps Script deployment URL
+const GOOGLE_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL';
 
 // reCAPTCHA Configuration
 const RECAPTCHA_SITE_KEY = '6LfksPwrAAAAAPJybNbRh41EENB_tgoF94lMarx8';
@@ -47,12 +44,7 @@ const ARCHETYPE_INFO = {
     }
 };
 
-// Initialize EmailJS
-function initializeEmailJS() {
-    if (EMAILJS_CONFIG.publicKey !== 'YOUR_PUBLIC_KEY') {
-        emailjs.init(EMAILJS_CONFIG.publicKey);
-    }
-}
+// No initialization needed for Google Apps Script
 
 // Calculate archetype scores
 function calculateArchetypes(formData) {
@@ -164,26 +156,8 @@ function displayResults(archetypes) {
     resultsDiv.innerHTML = html;
 }
 
-// Format email content
-function formatEmailContent(formData, archetypes) {
-    const questions = [
-        "When I'm learning something new, I prefer...",
-        "When someone gives me feedback, I prefer...",
-        "I understand best when information is...",
-        "When I make a mistake, I usually...",
-        "I feel most motivated when...",
-        "If a trainer were helping me, I'd want them to...",
-        "In group training sessions, I usually...",
-        "When someone corrects me, I appreciate...",
-        "When I read instructions, I prefer...",
-        "I like feedback that...",
-        "I tend to...",
-        "My best learning happens when...",
-        "When I'm learning something challenging, I prefer to...",
-        "I stay motivated when...",
-        "My ideal coaching style would be..."
-    ];
-
+// Prepare data for submission to Google Apps Script
+function prepareSubmissionData(formData, archetypes) {
     const answerText = {
         q1: { A: "Trying it myself right away", B: "Watching or hearing an example first" },
         q2: { A: "Straightforward, direct comments", B: "A collaborative talk about what worked and what didn't" },
@@ -202,46 +176,29 @@ function formatEmailContent(formData, archetypes) {
         q15: { A: "Structured sessions with clear takeaways", B: "Flexible conversations that evolve naturally" }
     };
 
-    let content = "APTLY ABLE LEARNING PREFERENCES ASSESSMENT\n";
-    content += "==========================================\n\n";
-    content += `Submission Time: ${new Date().toLocaleString()}\n\n`;
-
-    // Archetype Results
-    content += "LEARNING STYLE PROFILE\n";
-    content += "----------------------\n";
-    content += `Primary Archetype: ${ARCHETYPE_INFO[archetypes.primary].icon} ${archetypes.primary} (${archetypes.scores[archetypes.primary]}/15 points)\n`;
-    if (archetypes.secondary) {
-        content += `Secondary Archetype: ${ARCHETYPE_INFO[archetypes.secondary].icon} ${archetypes.secondary} (${archetypes.scores[archetypes.secondary]}/15 points)\n`;
-    }
-    content += "\nScore Breakdown:\n";
-    for (const archetype in archetypes.scores) {
-        content += `  ${ARCHETYPE_INFO[archetype].icon} ${archetype}: ${archetypes.scores[archetype]}/15 (${archetypes.percentages[archetype]}%)\n`;
-    }
-    content += "\n\n";
-
-    // Learning Preferences
-    content += "LEARNING PREFERENCES\n";
-    content += "====================\n\n";
+    // Prepare answers with full text
+    const answers = {};
     for (let i = 1; i <= 15; i++) {
         const questionKey = `q${i}`;
         const answer = formData[questionKey];
         const archetype = ARCHETYPE_MAPPING[questionKey][answer];
-        content += `${i}. ${questions[i-1]}\n`;
-        content += `   Answer: ${answer}. ${answerText[questionKey][answer]}\n`;
-        content += `   Archetype: ${ARCHETYPE_INFO[archetype].icon} ${archetype}\n\n`;
+        answers[questionKey] = {
+            answer: answer,
+            text: answerText[questionKey][answer],
+            archetype: archetype
+        };
     }
 
-    // Reflection Questions
-    content += "\nREFLECTION RESPONSES\n";
-    content += "====================\n\n";
-    content += "1. What's one thing a coach should definitely do to help you thrive?\n";
-    content += `   ${formData.reflection1}\n\n`;
-    content += "2. What's one thing that doesn't work well for you when learning or receiving feedback?\n";
-    content += `   ${formData.reflection2}\n\n`;
-    content += "3. How do you prefer to receive feedback? (In writing, verbally, or both)\n";
-    content += `   ${formData.reflection3}\n\n`;
-
-    return content;
+    // Prepare complete submission object
+    return {
+        archetypes: archetypes,
+        answers: answers,
+        reflections: {
+            reflection1: formData.reflection1,
+            reflection2: formData.reflection2,
+            reflection3: formData.reflection3
+        }
+    };
 }
 
 // Handle form submission
@@ -314,27 +271,28 @@ async function handleSubmit(event) {
     submitBtn.style.display = 'none';
     loadingSpinner.style.display = 'block';
 
-    // Prepare email content
-    const emailContent = formatEmailContent(formData, archetypes);
+    // Prepare submission data
+    const submissionData = prepareSubmissionData(formData, archetypes);
 
     try {
-        // Check if EmailJS is configured
-        if (EMAILJS_CONFIG.publicKey === 'YOUR_PUBLIC_KEY') {
-            throw new Error('EmailJS not configured. Please update the configuration in script.js');
+        // Check if Google Apps Script URL is configured
+        if (GOOGLE_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL') {
+            throw new Error('Google Apps Script URL not configured. Please update GOOGLE_SCRIPT_URL in script.js');
         }
 
-        // Send email using EmailJS
-        const response = await emailjs.send(
-            EMAILJS_CONFIG.serviceId,
-            EMAILJS_CONFIG.templateId,
-            {
-                message: emailContent,
-                to_email: 'info@aptlyable.com',
-                subject: `Learning Preferences Assessment - ${new Date().toLocaleDateString()}`
-            }
-        );
+        // Send data to Google Apps Script
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(submissionData),
+            mode: 'no-cors' // Required for Google Apps Script
+        });
 
-        console.log('Email sent successfully:', response);
+        // Note: With mode: 'no-cors', we can't read the response,
+        // but the submission will still work if configured correctly
+        console.log('Assessment submitted successfully');
 
         // Show success message
         form.style.display = 'none';
@@ -346,7 +304,7 @@ async function handleSubmit(event) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
     } catch (error) {
-        console.error('Error sending email:', error);
+        console.error('Error submitting assessment:', error);
         
         // Show error message
         errorMessage.textContent = 'There was an error submitting your assessment. Please try again or contact support.';
@@ -363,9 +321,6 @@ async function handleSubmit(event) {
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize EmailJS
-    initializeEmailJS();
-
     // Add form submit listener
     const form = document.getElementById('assessmentForm');
     form.addEventListener('submit', handleSubmit);
@@ -398,9 +353,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log('Aptly Able Assessment Form initialized');
     
-    // Check if EmailJS is configured
-    if (EMAILJS_CONFIG.publicKey === 'YOUR_PUBLIC_KEY') {
-        console.warn('⚠️ EmailJS is not configured. Please update the EMAILJS_CONFIG object in script.js with your credentials.');
+    // Check if Google Apps Script is configured
+    if (GOOGLE_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL') {
+        console.warn('⚠️ Google Apps Script URL is not configured. Please update GOOGLE_SCRIPT_URL in script.js with your deployment URL.');
     }
 });
 

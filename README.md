@@ -6,7 +6,7 @@ A professional, self-contained form application for collecting learning preferen
 
 - ✨ Clean, modern UI with Aptly Able branding (#24568d)
 - 📊 Automatic archetype scoring (Analyst, Doer, Connector, Explorer)
-- 📧 Email submission via EmailJS
+- 📧 FREE email submission via Google Apps Script + Gmail (no monthly fees!)
 - 🛡️ Spam protection with Google reCAPTCHA v2 + honeypot field
 - 📱 Fully responsive design
 - ✅ Form validation and error handling
@@ -57,67 +57,45 @@ const RECAPTCHA_SITE_KEY = '6LcXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
 
 **Note**: The reCAPTCHA will work on localhost for testing without any additional configuration.
 
-### 2. EmailJS Configuration
+### 2. Google Apps Script Setup (FREE Email Sending!)
 
-This application uses [EmailJS](https://www.emailjs.com/) to send form submissions. Follow these steps to set it up:
+This application uses Google Apps Script to send emails via your Gmail account - completely free! No monthly fees.
 
-#### Step 1: Create an EmailJS Account
+**📖 See [SETUP_GUIDE.md](SETUP_GUIDE.md) for detailed step-by-step instructions.**
 
-1. Go to [https://www.emailjs.com/](https://www.emailjs.com/)
-2. Click "Sign Up" and create a free account
-3. Verify your email address
+Quick overview:
 
-#### Step 2: Add an Email Service
+#### Step 1: Create Google Apps Script
 
-1. In your EmailJS dashboard, click "Email Services"
-2. Click "Add New Service"
-3. Choose your email provider (Gmail, Outlook, etc.)
-4. Follow the prompts to connect your email account
-5. Note your **Service ID** (e.g., `service_abc123`)
+1. Go to [https://script.google.com](https://script.google.com)
+2. Create a new project
+3. Copy the code from `google-apps-script.gs` into the editor
+4. Save the project
 
-#### Step 3: Create an Email Template
+#### Step 2: Deploy as Web App
 
-1. In your EmailJS dashboard, click "Email Templates"
-2. Click "Create New Template"
-3. Set up your template with these parameters:
-   - **Template Name**: `Learning Preferences Assessment`
-   - **Subject**: `Learning Preferences Assessment - {{subject}}`
-   - **Content**: 
-   ```
-   New Learning Preferences Assessment Submission
-   
-   {{message}}
-   ```
-4. Save the template and note your **Template ID** (e.g., `template_xyz789`)
+1. Click **Deploy** → **New deployment**
+2. Choose **Web app** type
+3. Set "Execute as" to **Me**
+4. Set "Who has access" to **Anyone**
+5. Click **Deploy** and authorize the app
+6. **Copy the deployment URL** (looks like: `https://script.google.com/macros/s/AKfycbx.../exec`)
 
-#### Step 4: Get Your Public Key
+#### Step 3: Update Configuration
 
-1. In your EmailJS dashboard, click "Account"
-2. Find your **Public Key** (e.g., `abcdefghijklmnop`)
-
-#### Step 5: Update the Configuration
-
-Open `script.js` and update the `EMAILJS_CONFIG` object:
+Open `script.js` and update the Google Apps Script URL:
 
 ```javascript
-const EMAILJS_CONFIG = {
-    serviceId: 'service_abc123',      // Replace with your Service ID
-    templateId: 'template_xyz789',     // Replace with your Template ID
-    publicKey: 'abcdefghijklmnop'      // Replace with your Public Key
-};
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxXXXXXXXXXXX/exec';
 ```
 
-Also update the team email address in the `handleSubmit` function:
+That's it! The email will be sent to `info@aptlyable.com` (configured in the Google Apps Script)
 
-```javascript
-to_email: 'your-team-email@aptlyable.com', // Update with your team email
-```
-
-### 2. Testing Locally
+### 3. Testing Locally
 
 1. Open `index.html` in a web browser
 2. Fill out the assessment form
-3. Submit and verify the email is received
+3. Submit and verify the email is received at info@aptlyable.com
 
 You can also use a local server for testing:
 
@@ -134,7 +112,7 @@ php -S localhost:8000
 
 Then navigate to `http://localhost:8000` in your browser.
 
-### 3. Embedding on Wix
+### 4. Embedding on Wix
 
 There are two methods to embed this form on your Wix website:
 
@@ -176,7 +154,7 @@ There are two methods to embed this form on your Wix website:
 3. Enable GitHub Pages in Settings → Pages
 4. Use the provided URL in an iframe on your Wix site
 
-### 4. Customization
+### 5. Customization
 
 #### Update Colors
 
@@ -210,12 +188,14 @@ Edit the questions in `index.html`. If you add or remove questions, make sure to
 
 ```
 Learning Preferences Submitter/
-├── index.html              # Main form structure
-├── styles.css              # Styling and branding
-├── script.js               # Form logic and EmailJS integration
+├── index.html                 # Main form structure
+├── styles.css                 # Styling and branding
+├── script.js                  # Form logic and submission handling
+├── google-apps-script.gs      # Google Apps Script code for email sending
 ├── assets/
 │   └── Aptly-Able-Logo2.jpg  # Company logo
-└── README.md               # This file
+├── SETUP_GUIDE.md             # Detailed setup instructions
+└── README.md                  # This file
 ```
 
 ## Browser Compatibility
@@ -229,10 +209,11 @@ Learning Preferences Submitter/
 
 ### Email Not Sending
 
-1. Check that EmailJS credentials are correct in `script.js`
-2. Verify your EmailJS service is active
+1. Check that Google Apps Script URL is correct in `script.js`
+2. Verify your Google Apps Script is deployed as "Anyone" can access
 3. Check browser console for error messages (F12 → Console)
-4. Ensure your EmailJS free tier quota hasn't been exceeded (200 emails/month)
+4. Check your Gmail spam folder
+5. Check Google Apps Script execution logs at script.google.com
 
 ### Form Not Submitting
 
@@ -264,17 +245,18 @@ Learning Preferences Submitter/
 
 ## Security Notes
 
-- Never commit your EmailJS credentials to a public repository
-- Consider using environment variables for sensitive data
-- EmailJS free tier has rate limiting (200 emails/month)
-- For production use, consider upgrading to a paid EmailJS plan
+- The Google Apps Script URL can be public (it only accepts form data)
+- Only you can modify or view the Google Apps Script code
+- Gmail sending limits: 100 emails/day (free), 1500/day (Google Workspace)
+- Form submissions go directly to your inbox
+- reCAPTCHA and honeypot field protect against spam
 
 ## Support
 
 For questions or issues with the form:
 - Check the browser console for error messages
-- Verify EmailJS configuration
-- Contact the development team
+- Verify Google Apps Script configuration
+- See [SETUP_GUIDE.md](SETUP_GUIDE.md) for detailed troubleshooting
 
 ## License
 
@@ -282,10 +264,17 @@ For questions or issues with the form:
 
 ## Version History
 
+- **v1.1.0** (2025-10-30): Switched to Google Apps Script
+  - FREE email sending via Gmail (no monthly fees!)
+  - Removed EmailJS dependency
+  - Added comprehensive setup guide
+  - All other features remain the same
+
 - **v1.0.0** (2025-10-30): Initial release
   - 15 learning preference questions
   - 3 reflection questions
   - Archetype scoring algorithm
-  - EmailJS integration
+  - Email integration
   - Responsive design with Aptly Able branding
+  - Spam protection with reCAPTCHA
 
