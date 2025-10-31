@@ -1,6 +1,6 @@
 // Google Apps Script Web App URL
 // IMPORTANT: Replace with your actual Google Apps Script deployment URL
-const GOOGLE_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJ7PhfyI9d3TJLW9uB5MxG8ZQKu0tmsrRMMkyboTEZrzqzeDLPgemjdoCGFrAtd802Vg/exec';
 
 // reCAPTCHA Configuration
 const RECAPTCHA_SITE_KEY = '6LfksPwrAAAAAPJybNbRh41EENB_tgoF94lMarx8';
